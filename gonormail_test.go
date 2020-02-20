@@ -188,7 +188,7 @@ func TestDeleteDots(t *testing.T) {
 	}
 }
 
-func TestCutPlusRight(t *testing.T) {
+func TestDeleteSubAddr(t *testing.T) {
 	tests := []struct {
 		localPart string
 		want      string
@@ -201,8 +201,8 @@ func TestCutPlusRight(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if got := CutPlusRight(tt.localPart); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CutPlusRight() = %v, want %v", got, tt.want)
+			if got := DeleteSubAddr(tt.localPart); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("DeleteSubAddr() = %v, want %v", got, tt.want)
 			}
 		})
 	}

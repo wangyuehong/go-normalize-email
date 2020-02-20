@@ -23,8 +23,8 @@ gonormail.Normalize("a.b.c+001@whatever.com")   // a.b.c+001@whatever.com
 customized normalization.
 ```golang
 norm := gonormail.DefaultNormalizer().
-  Register("live.com", gonormail.DeleteDots, gonormail.CutPlusRight).
-  Register("hotmail.com", gonormail.CutPlusRight).
+  Register("live.com", gonormail.DeleteDots, gonormail.DeleteSubAddr).
+  Register("hotmail.com", gonormail.DeleteSubAddr).
   Register("whatever.com", func(s string) string { return s + "+s" })
 
 norm.Normalize("A.B.c+001@Gmail.com")      // abc@gmail.com

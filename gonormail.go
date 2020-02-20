@@ -22,7 +22,7 @@ type NormalizeFuncs []NormalizeFunc
 
 var (
 	defaultFuncs         = NormalizeFuncs{strings.ToLower}
-	gmailLocalFuncs      = NormalizeFuncs{DeleteDots, CutPlusRight}
+	gmailLocalFuncs      = NormalizeFuncs{DeleteDots, DeleteSubAddr}
 	defaultGSuiteDomains = []string{domainGmail, domainGmailAlias}
 	defaultNormalizer    = DefaultNormalizer()
 )
@@ -120,7 +120,7 @@ func DeleteDots(localPart string) string {
 	return strings.ReplaceAll(localPart, DOT, EMPTY)
 }
 
-// CutPlusRight cut the first plus("+") and the right part of then given local part.
-func CutPlusRight(localPart string) string {
+// DeleteSubAddr cut the sub-addressing starting with plus("+").
+func DeleteSubAddr(localPart string) string {
 	return strings.Split(localPart, PLUS)[0]
 }
