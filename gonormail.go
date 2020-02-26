@@ -6,12 +6,6 @@ import (
 	"sync"
 )
 
-const (
-	AT    = "@"
-	DOT   = "."
-	EMPTY = ""
-)
-
 var (
 	defaultEmailNormalizer = DefaultEmailNormalizer()
 )
@@ -23,7 +17,9 @@ type Normalizer interface {
 type NormalizeFunc func(*EmailAddress)
 
 func (n NormalizeFunc) Normalize(email *EmailAddress) {
-	n(email)
+	if n != nil {
+		n(email)
+	}
 }
 
 type EmailAddress struct {
@@ -32,7 +28,7 @@ type EmailAddress struct {
 }
 
 func NewEmailAddress(email string) *EmailAddress {
-	splitted := strings.Split(email, AT)
+	splitted := strings.Split(email, "@")
 	if len(splitted) != 2 {
 		return nil
 	}
@@ -41,10 +37,10 @@ func NewEmailAddress(email string) *EmailAddress {
 }
 
 func (e *EmailAddress) String() string {
-	return fmt.Sprintf("%s%s%s", e.Local, AT, e.Domain)
+	return fmt.Sprintf("%s%s%s", e.Local, "@", e.Domain)
 }
 
-// EmailNormalizer struct that holding normalizaters.
+// EmailNormalizer struct that holding Normalizater.
 type EmailNormalizer struct {
 	mux         sync.Mutex
 	normalizers []Normalizer
@@ -62,13 +58,8 @@ func DefaultEmailNormalizer() *EmailNormalizer {
 
 // NewEmailNormalizer create new EmailNormalizer by given Normalizer
 func NewEmailNormalizer(nrs ...Normalizer) *EmailNormalizer {
-	normalizers := make([]Normalizer, 0, len(nrs))
-	for _, nr := range nrs {
-		if nr != nil {
-			normalizers = append(normalizers, nr)
-		}
-	}
-	return &EmailNormalizer{normalizers: normalizers}
+	enr := &EmailNormalizer{}
+	return enr.AddNormalizer(nrs...)
 }
 
 // Normalize normalize given email by registered Normalizer.
@@ -84,7 +75,7 @@ func (n *EmailNormalizer) Normalize(email string) string {
 	return emailAddress.String()
 }
 
-// AddNormalizer append normalizers.
+// AddNormalizer add Normalizer.
 func (n *EmailNormalizer) AddNormalizer(nrs ...Normalizer) *EmailNormalizer {
 	n.mux.Lock()
 	defer n.mux.Unlock()
@@ -97,7 +88,18 @@ func (n *EmailNormalizer) AddNormalizer(nrs ...Normalizer) *EmailNormalizer {
 	return n
 }
 
-// Normalize normalize given email by default EmailNormalizer
+// AddFunc add func as Normalizer.
+func (n *EmailNormalizer) AddFunc(nfs ...func(*EmailAddress)) *EmailNormalizer {
+	for _, fuc := range nfs {
+		if fuc != nil {
+			n.AddNormalizer(NormalizeFunc(fuc))
+		}
+	}
+
+	return n
+}
+
+// Normalize normalizes given email by default EmailNormalizer whitch supports gmail.
 func Normalize(email string) string {
 	return defaultEmailNormalizer.Normalize(email)
 }
@@ -124,7 +126,7 @@ func NewRemoveLocalDots(domains ...string) *RemoveLocalDots {
 // Normalize ...
 func (d *RemoveLocalDots) Normalize(email *EmailAddress) {
 	if _, ok := d.domains[email.Domain]; ok {
-		email.Local = strings.ReplaceAll(email.Local, DOT, EMPTY)
+		email.Local = strings.ReplaceAll(email.Local, ".", "")
 	}
 }
 
@@ -132,12 +134,12 @@ type RemoveSubAddressing struct {
 	tags map[string]string
 }
 
-// NewRemoveSubAddressing ...
+// NewRemoveSubAddressing returns a new Normalizer that removes sub-addressing by given domain -> tag map
 func NewRemoveSubAddressing(tags map[string]string) *RemoveSubAddressing {
 	return &RemoveSubAddressing{tags: tags}
 }
 
-// Normalize ...
+// Normalize normalizes local part of the given email by removing sub-addressing.
 func (s *RemoveSubAddressing) Normalize(email *EmailAddress) {
 	if tag, ok := s.tags[email.Domain]; ok {
 		email.Local = strings.Split(email.Local, tag)[0]

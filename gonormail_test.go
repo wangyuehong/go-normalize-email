@@ -27,205 +27,37 @@ func TestNormalize(t *testing.T) {
 	}
 }
 
-// func TestNormalizer_Register(t *testing.T) {
-// 	type fields struct {
-// 		localFuncs         NormalizeFuncs
-// 		domainFuncs        NormalizeFuncs
-// 		localFuncsByDomain map[string]NormalizeFuncs
-// 	}
-// 	type args struct {
-// 		domain string
-// 		funcs  []NormalizeFunc
-// 	}
-// 	tests := []struct {
-// 		fields fields
-// 		argss  []args
-// 		email  string
-// 		want   string
-// 	}{
-// 		{
-// 			fields: fields{
-// 				localFuncs:         nil,
-// 				domainFuncs:        nil,
-// 				localFuncsByDomain: nil,
-// 			},
-// 			argss: []args{
-// 				{
-// 					domain: "",
-// 					funcs:  nil,
-// 				},
-// 				{
-// 					domain: "",
-// 					funcs:  nil,
-// 				},
-// 			},
-// 			email: "abc@email.com",
-// 			want:  "abc@email.com",
-// 		},
-// 		{
-// 			fields: fields{
-// 				localFuncs:         defaultFuncs,
-// 				domainFuncs:        defaultFuncs,
-// 				localFuncsByDomain: nil,
-// 			},
-// 			argss: []args{
-// 				{
-// 					domain: "email.COM",
-// 					funcs: NormalizeFuncs{
-// 						func(s string) string { return s + "+" },
-// 						func(s string) string { return s + "m" },
-// 					},
-// 				},
-// 				{
-// 					domain: "EMAIL.com",
-// 					funcs: NormalizeFuncs{
-// 						nil,
-// 						func(s string) string { return s + "n" },
-// 					},
-// 				},
-// 			},
-// 			email: "ABC@EMAIL.COM",
-// 			want:  "abc+mn@email.com",
-// 		},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			n := NewNormalizer(tt.fields.domainFuncs, tt.fields.localFuncs, tt.fields.localFuncsByDomain)
-// 			for _, args := range tt.argss {
-// 				n = n.Register(args.domain, args.funcs...)
-// 			}
-// 			if got := n.Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("Normalize() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestNormalizer_Normalize(t *testing.T) {
-// 	type fields struct {
-// 		localFuncs         NormalizeFuncs
-// 		domainFuncs        NormalizeFuncs
-// 		localFuncsByDomain map[string]NormalizeFuncs
-// 	}
-// 	tests := []struct {
-// 		fields fields
-// 		email  string
-// 		want   string
-// 	}{
-// 		{
-// 			fields: fields{
-// 				localFuncs:         nil,
-// 				domainFuncs:        nil,
-// 				localFuncsByDomain: nil,
-// 			},
-// 			email: "abc@email.com",
-// 			want:  "abc@email.com",
-// 		},
-// 		{
-// 			fields: fields{
-// 				localFuncs:         nil,
-// 				domainFuncs:        nil,
-// 				localFuncsByDomain: map[string]NormalizeFuncs{"email.com": nil},
-// 			},
-// 			email: "abc@email.com",
-// 			want:  "abc@email.com",
-// 		},
-// 		{
-// 			fields: fields{
-// 				localFuncs:  NormalizeFuncs{strings.ToUpper},
-// 				domainFuncs: NormalizeFuncs{strings.ToUpper},
-// 				localFuncsByDomain: map[string]NormalizeFuncs{
-// 					"EMAIL.COM": NormalizeFuncs{func(s string) string { return s + "+s" }},
-// 				},
-// 			},
-// 			email: "abc@email.com",
-// 			want:  "ABC+s@EMAIL.COM",
-// 		},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			n := NewNormalizer(tt.fields.domainFuncs, tt.fields.localFuncs, tt.fields.localFuncsByDomain)
-// 			if got := n.Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("Normalizer.Normalize() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestDeleteDots(t *testing.T) {
-// 	tests := []struct {
-// 		localPart string
-// 		want      string
-// 	}{
-// 		{localPart: "", want: ""},
-// 		{localPart: ".", want: ""},
-// 		{localPart: "a.b", want: "ab"},
-// 		{localPart: "a.b.c", want: "abc"},
-// 		{localPart: ".a.b.c.", want: "abc"},
-// 		{localPart: "a..b...c", want: "abc"},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			if got := DeleteDots(tt.localPart); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("DeleteDots() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestDeleteSubAddr(t *testing.T) {
-// 	tests := []struct {
-// 		localPart string
-// 		want      string
-// 	}{
-// 		{localPart: "", want: ""},
-// 		{localPart: "+", want: ""},
-// 		{localPart: "a+b", want: "a"},
-// 		{localPart: "a+b+c", want: "a"},
-// 		{localPart: "+c", want: ""},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			if got := DeleteSubAddr(tt.localPart); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("DeleteSubAddr() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func Test_normalize(t *testing.T) {
-// 	tests := []struct {
-// 		funcs NormalizeFuncs
-// 		str   string
-// 		want  string
-// 	}{
-// 		{
-// 			funcs: nil,
-// 			str:   "a",
-// 			want:  "a",
-// 		},
-// 		{
-// 			funcs: NormalizeFuncs{nil},
-// 			str:   "a",
-// 			want:  "a",
-// 		},
-// 		{
-// 			funcs: NormalizeFuncs{
-// 				func(s string) string { return s + "j" },
-// 				func(s string) string { return s + "k" },
-// 			},
-// 			str:  "a",
-// 			want: "ajk",
-// 		},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			if got := normalize(tt.funcs, tt.str); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("normalize() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
+func TestEmailNormalizer_Normalize(t *testing.T) {
+	tests := []struct {
+		emailNormalizer *EmailNormalizer
+		email           string
+		want            string
+	}{
+		{
+			emailNormalizer: (&EmailNormalizer{}).AddFunc(nil),
+			email:           "abc@email.com",
+			want:            "abc@email.com",
+		},
+		{
+			emailNormalizer: (&EmailNormalizer{}).AddNormalizer(NormalizeFunc(nil)),
+			email:           "abc@email.com",
+			want:            "abc@email.com",
+		},
+		{
+			emailNormalizer: (&EmailNormalizer{}).AddFunc(func(e *EmailAddress) { e.Local += "l" },
+				func(e *EmailAddress) { e.Domain += "d" }),
+			email: "abc@email.com",
+			want:  "abcl@email.comd",
+		},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if got := tt.emailNormalizer.Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("EmailNormalizer.Normalize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 func TestRemoveLocalDots_Normalize(t *testing.T) {
 	tests := []struct {
