@@ -1,18 +1,31 @@
 package gonormail
 
-// func TestDefaultNormalizer(t *testing.T) {
-// 	want := &Normalizer{
-// 		localFuncs:  defaultFuncs,
-// 		domainFuncs: defaultFuncs,
-// 		localFuncsByDomain: map[string]NormalizeFuncs{
-// 			domainGmail:      gmailLocalFuncs,
-// 			domainGmailAlias: gmailLocalFuncs,
-// 		},
-// 	}
-// 	if got := DefaultNormalizer(); !reflect.DeepEqual(got, want) {
-// 		t.Errorf("DefaultNormalizer() = %v, want %v", got, want)
-// 	}
-// }
+import (
+	"fmt"
+	"reflect"
+	"testing"
+)
+
+func TestNormalize(t *testing.T) {
+	tests := []struct {
+		email string
+		want  string
+	}{
+		{email: "Not A Email", want: "Not A Email"},
+		{email: "Not@A@Email", want: "Not@A@Email"},
+		{email: "A.B.c@Gmail.com", want: "abc@gmail.com"},
+		{email: "a.B..c@Gmail.com", want: "abc@gmail.com"},
+		{email: "a.b.c+001@googlemail.com", want: "abc@gmail.com"},
+		{email: "a.b.c+001@whatever.com", want: "a.b.c+001@whatever.com"},
+	}
+	for i, tt := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if got := Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Normalize() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
 // func TestNormalizer_Register(t *testing.T) {
 // 	type fields struct {
@@ -134,27 +147,6 @@ package gonormail
 // 			n := NewNormalizer(tt.fields.domainFuncs, tt.fields.localFuncs, tt.fields.localFuncsByDomain)
 // 			if got := n.Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
 // 				t.Errorf("Normalizer.Normalize() = %v, want %v", got, tt.want)
-// 			}
-// 		})
-// 	}
-// }
-
-// func TestNormalize(t *testing.T) {
-// 	tests := []struct {
-// 		email string
-// 		want  string
-// 	}{
-// 		{email: "not.A.email", want: "not.A.email"},
-// 		{email: "not@@Email", want: "not@@Email"},
-// 		{email: "abcd@email.com", want: "abcd@email.com"},
-// 		{email: "Abcd@Email.com", want: "abcd@email.com"},
-// 		{email: "A.B.C.D+001@Gmail.com", want: "abcd@gmail.com"},
-// 		{email: "A.B.C..D+001@googlemail.com", want: "abcd@googlemail.com"},
-// 	}
-// 	for i, tt := range tests {
-// 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-// 			if got := Normalize(tt.email); !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("Normalize() = %v, want %v", got, tt.want)
 // 			}
 // 		})
 // 	}

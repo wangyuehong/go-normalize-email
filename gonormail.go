@@ -10,12 +10,10 @@ const (
 	AT    = "@"
 	DOT   = "."
 	EMPTY = ""
-
-	domainGmail = "gmail.com"
 )
 
 var (
-	defaultNormalizers = DefaultNormalizers()
+	defaultEmailNormalizer = DefaultEmailNormalizer()
 )
 
 type Normalizer interface {
@@ -46,45 +44,48 @@ func (e *EmailAddress) String() string {
 	return fmt.Sprintf("%s%s%s", e.Local, AT, e.Domain)
 }
 
-// Normalizers struct that holding normalizaters.
-type Normalizers struct {
+// EmailNormalizer struct that holding normalizaters.
+type EmailNormalizer struct {
 	mux         sync.Mutex
 	normalizers []Normalizer
 }
 
-// DefaultNormalizers ...
-func DefaultNormalizers() *Normalizers {
-	return NewNormalizers(
-		NormalizeFunc(ToLower),
-		NewDomainAlias(map[string]string{"googlemail.com": domainGmail}),
-		NewDeleteLocalDots(domainGmail),
-		NewCutSubAddressing(map[string]string{domainGmail: "+"}),
+// DefaultNormalizer ...
+func DefaultEmailNormalizer() *EmailNormalizer {
+	return NewEmailNormalizer(
+		NormalizeFunc(ToLowerCase),
+		NewDomainAlias(map[string]string{"googlemail.com": "gmail.com"}),
+		NewRemoveLocalDots("gmail.com"),
+		NewRemoveSubAddressing(map[string]string{"gmail.com": "+"}),
 	)
 }
 
-// NewNormalizers create new Normalizers by given Normalizer
-func NewNormalizers(nrs ...Normalizer) *Normalizers {
+// NewEmailNormalizer create new EmailNormalizer by given Normalizer
+func NewEmailNormalizer(nrs ...Normalizer) *EmailNormalizer {
 	normalizers := make([]Normalizer, 0, len(nrs))
 	for _, nr := range nrs {
 		if nr != nil {
 			normalizers = append(normalizers, nr)
 		}
 	}
-	return &Normalizers{normalizers: normalizers}
+	return &EmailNormalizer{normalizers: normalizers}
 }
 
 // Normalize normalize given email by registered Normalizer.
-func (n *Normalizers) Normalize(email *EmailAddress) {
-	for _, nr := range n.normalizers {
-		if nr != nil && email != nil {
-			nr.Normalize(email)
-		}
+func (n *EmailNormalizer) Normalize(email string) string {
+	emailAddress := NewEmailAddress(email)
+	if emailAddress == nil {
+		return email
 	}
-	return
+
+	for _, nr := range n.normalizers {
+		nr.Normalize(emailAddress)
+	}
+	return emailAddress.String()
 }
 
-// AppendNormalizer append normalizers.
-func (n *Normalizers) AppendNormalizer(nrs ...Normalizer) *Normalizers {
+// AddNormalizer append normalizers.
+func (n *EmailNormalizer) AddNormalizer(nrs ...Normalizer) *EmailNormalizer {
 	n.mux.Lock()
 	defer n.mux.Unlock()
 
@@ -96,48 +97,48 @@ func (n *Normalizers) AppendNormalizer(nrs ...Normalizer) *Normalizers {
 	return n
 }
 
-// Normalize normalize given email by default Normalizers
-func Normalize(email *EmailAddress) {
-	defaultNormalizers.Normalize(email)
+// Normalize normalize given email by default EmailNormalizer
+func Normalize(email string) string {
+	return defaultEmailNormalizer.Normalize(email)
 }
 
-// ToLower normalize local part and domain part to lower case.
-func ToLower(email *EmailAddress) {
+// ToLowerCase normalize local part and domain part to lower case.
+func ToLowerCase(email *EmailAddress) {
 	email.Local = strings.ToLower(email.Local)
 	email.Domain = strings.ToLower(email.Domain)
 }
 
-type DeleteLocalDots struct {
+type RemoveLocalDots struct {
 	domains map[string]struct{}
 }
 
-// NewDeleteLocalDots ...
-func NewDeleteLocalDots(domains ...string) *DeleteLocalDots {
+// NewRemoveLocalDots ...
+func NewRemoveLocalDots(domains ...string) *RemoveLocalDots {
 	domainMap := make(map[string]struct{}, len(domains))
 	for _, domain := range domains {
 		domainMap[domain] = struct{}{}
 	}
-	return &DeleteLocalDots{domains: domainMap}
+	return &RemoveLocalDots{domains: domainMap}
 }
 
 // Normalize ...
-func (d *DeleteLocalDots) Normalize(email *EmailAddress) {
+func (d *RemoveLocalDots) Normalize(email *EmailAddress) {
 	if _, ok := d.domains[email.Domain]; ok {
 		email.Local = strings.ReplaceAll(email.Local, DOT, EMPTY)
 	}
 }
 
-type CutSubAddressing struct {
+type RemoveSubAddressing struct {
 	tags map[string]string
 }
 
-// NewCutSubAddressing ...
-func NewCutSubAddressing(tags map[string]string) *CutSubAddressing {
-	return &CutSubAddressing{tags: tags}
+// NewRemoveSubAddressing ...
+func NewRemoveSubAddressing(tags map[string]string) *RemoveSubAddressing {
+	return &RemoveSubAddressing{tags: tags}
 }
 
 // Normalize ...
-func (s *CutSubAddressing) Normalize(email *EmailAddress) {
+func (s *RemoveSubAddressing) Normalize(email *EmailAddress) {
 	if tag, ok := s.tags[email.Domain]; ok {
 		email.Local = strings.Split(email.Local, tag)[0]
 	}
